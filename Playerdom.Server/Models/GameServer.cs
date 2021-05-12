@@ -168,6 +168,8 @@ namespace Playerdom.Models
 
                 while(MessageQueue.TryDequeue(out ChatMessage message))
                 {
+                    if (message.Content == null) continue;
+
                     if(message.Content.StartsWith('/') && message.MessageType != ChatMessageTypes.Server)
                     {
                         if (message.Content.StartsWith("/tp"))
