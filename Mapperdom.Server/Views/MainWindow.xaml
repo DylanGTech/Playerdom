@@ -1,0 +1,56 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Playerdom.Server.ViewModels;assembly=Playerdom.Server"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Playerdom.Server.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Playerdom.Server">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+	<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+		<StackPanel IsVisible="{Binding !IsRunning, Mode=OneWay}">
+			<TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+			<Button Content="Start Server" Command="{Binding StartServerCommand, Mode=OneTime}" IsEnabled="{Binding !IsRunning, Mode=OneWay}"/>
+		</StackPanel>
+
+		<Grid IsVisible="{Binding IsRunning, Mode=OneWay}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition/>
+			</Grid.RowDefinitions>
+
+			<StackPanel Grid.Column="0" IsVisible="{Binding IsRunning, Mode=OneWay}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+				<TextBlock Text="{Binding NumPlayersString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<ListBox Items="{Binding Logs, Mode=OneWay}" Height="300">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding}" VerticalAlignment="Stretch"/>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition/>
+						<ColumnDefinition/>
+					</Grid.ColumnDefinitions>
+					<TextBox Grid.Column="0" Text="{Binding ServerCommand, Mode=TwoWay}"/>
+					<Button Grid.Column="1" Content="Send" Command="{Binding ExecuteCommand}"/>
+				</Grid>
+			</StackPanel>
+
+			<StackPanel Grid.Column="1" IsVisible="{Binding IsRunning, Mode=OneWay}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+				<TextBlock Text="Dimension:" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<ComboBox Items="{Binding Dimensions}" SelectedIndex="{Binding SelectedDimension, Mode=TwoWay}"/>
+				<TextBlock Text="{Binding NumLoadedChunksString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<TextBlock Text="{Binding NumLoadedObjectsString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Grid>
+	</StackPanel>
+</Window>
