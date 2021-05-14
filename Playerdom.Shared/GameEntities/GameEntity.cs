@@ -80,7 +80,7 @@ namespace Playerdom.Shared.GameEntities
 
                         Tile t = map.LoadedChunks[(chunkIndex.Item1, chunkIndex.Item2)].Tiles[tileIndex.Item1, tileIndex.Item2];
 
-                        if ((t.IsLiquid && !canSwim) && (!canFly && (t.IsLiquid || t.IsGroundSolid)))
+                        if ((t.IsLiquid && !canSwim) || (!canFly && (t.IsLiquid || t.IsGroundSolid)))
                         {
                             (double, double) newCoords = (Coordinates.Item1 + velocity.Item1, Coordinates.Item2 + velocity.Item2);
 

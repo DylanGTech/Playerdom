@@ -79,7 +79,7 @@ namespace Playerdom.Shared
 
                         try
                         {
-                            LoadedChunks.TryAdd((xCoord, yCoord), (Chunk)MessagePackSerializer.Deserialize<Chunk>(tilesData, PlayerdomGame.SerializerSettings));
+                            LoadedChunks.TryAdd((xCoord, yCoord), MessagePackSerializer.Deserialize<Chunk>(tilesData, PlayerdomGame.SerializerSettings));
 
 
                             Dictionary<Guid, GameObject> objects = MessagePackSerializer.Deserialize<Dictionary<Guid, GameObject>>(objectsData, PlayerdomGame.SerializerSettings);
@@ -108,21 +108,37 @@ namespace Playerdom.Shared
                         CubicNoise noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
 
 
-
+                        Random rng = new Random((dimensionRngString + xCoord + yCoord).ToSeed());
                         for (int y = 0; y < Chunk.SIZE; y++)
                         {
                             for (int x = 0; x < Chunk.SIZE; x++)
                             {
                                 float f = noiseGenerator.Sample(((double)xCoord * Chunk.SIZE + x) / Chunk.SIZE, ((double)yCoord * Chunk.SIZE + y) / Chunk.SIZE);
 
-                                if(f < 0.125F)
+                                if (f > 0.5 - 0.0625 && f < 0.5 + 0.0625)
                                 {
-                                    t[x, y].TypeId = 1;
+                                    double xVal = ((double)xCoord * Chunk.SIZE + x) % 47;
+                                    double yVal = ((double)yCoord * Chunk.SIZE + y) % 47;
+
+                                    if ((xVal > 0 && xVal < 4) || (yVal > 0 && yVal < 4))
+                                    {
+                                        t[x, y].TypeId = 4;
+                                        t[x, y].VarientId = 0;
+                                    }
+                                    else
+                                    {
+                                        t[x, y].TypeId = 2;
+                                        t[x, y].VarientId = 0;
+                                    }
+                                }
+                                else if ((byte)rng.Next(0, 1024) == 0)
+                                {
+                                    t[x, y].TypeId = 3;
                                     t[x, y].VarientId = 0;
                                 }
                                 else
                                 {
-                                    t[x, y].TypeId = 2;
+                                    t[x, y].TypeId = 1;
                                     t[x, y].VarientId = 0;
                                 }
                             }
@@ -216,6 +232,7 @@ namespace Playerdom.Shared
                     catch (Exception)
                     {
                         //TODO: Report this to the console
+                        
                     }
                 }
             }

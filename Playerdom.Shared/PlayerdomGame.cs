@@ -648,7 +648,7 @@ namespace Playerdom.Shared
                     Rectangle location = new Rectangle(position.ToPoint(), size.ToPoint());
                     spriteBatch.Draw(defaultRectangle, location, Color.Black);
                     //spriteBatch.DrawString(debugFont, content, position, color);
-                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), Color.White.ToGeneric());
+                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), color.ToGeneric());
                     position.Y += location.Height;
                 }
 
