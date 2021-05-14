@@ -119,7 +119,7 @@ namespace Playerdom.Shared
 
         public static double GetNormalRandomDouble(string seed, double mean, double standardDeviation, double? max = null, double? min = null)
         {
-            Random random = new Random(seed.GetHashCode());
+            Random random = new Random(seed.ToSeed());
 
             double value;
             do
@@ -167,6 +167,18 @@ namespace Playerdom.Shared
         public static System.Drawing.Color ToGeneric(this Color col)
         {
             return System.Drawing.Color.FromArgb(col.A, col.R, col.G, col.B);
+        }
+
+
+        public static int ToSeed(this string seedString)
+        {
+            ulong sum = 0;
+            foreach(char c in seedString)
+            {
+                sum += Convert.ToUInt64(c);
+            }
+
+            return (int)sum; //Purposefully cause data loss.
         }
     }
 }

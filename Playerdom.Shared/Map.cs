@@ -105,25 +105,26 @@ namespace Playerdom.Shared
                         Tile[,] t = new Tile[Chunk.SIZE, Chunk.SIZE];
 
                         string fullRngString = xCoord + dimensionRngString + yCoord;
-                        Random rng = new Random(fullRngString.GetHashCode());
+                        CubicNoise noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+
+
 
                         for (int y = 0; y < Chunk.SIZE; y++)
                         {
                             for (int x = 0; x < Chunk.SIZE; x++)
                             {
-                                byte b = (byte)rng.Next(0, 256);
+                                float f = noiseGenerator.Sample(((double)xCoord * Chunk.SIZE + x) / Chunk.SIZE, ((double)yCoord * Chunk.SIZE + y) / Chunk.SIZE);
 
-                                if (b < 8)
-                                {
-                                    t[x, y].TypeId = 2;
-                                    t[x, y].VarientId = 0;
-                                }
-                                else
+                                if(f < 0.125F)
                                 {
                                     t[x, y].TypeId = 1;
                                     t[x, y].VarientId = 0;
                                 }
-                                
+                                else
+                                {
+                                    t[x, y].TypeId = 2;
+                                    t[x, y].VarientId = 0;
+                                }
                             }
                         }
 

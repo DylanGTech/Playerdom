@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ChatMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Chunk.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CubicNoise.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CurrentClientState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Dimension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BasicDirections.cs" />
