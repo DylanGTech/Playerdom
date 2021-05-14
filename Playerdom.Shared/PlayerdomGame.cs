@@ -19,6 +19,9 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 using Playerdom.Shared.GameEntities;
 using System.Net;
+using FontStashSharp;
+using FontStashSharp.Interfaces;
+using System.IO;
 
 #endregion
 
@@ -29,6 +32,68 @@ namespace Playerdom.Shared
     /// </summary>
     public class PlayerdomGame : Game
     {
+        internal class Texture2DManager : ITexture2DManager
+        {
+            readonly GraphicsDevice _device;
+
+            public Texture2DManager(GraphicsDevice device)
+            {
+                if (device == null)
+                {
+                    throw new ArgumentNullException(nameof(device));
+                }
+
+                _device = device;
+            }
+
+            public object CreateTexture(int width, int height)
+            {
+                return new Texture2D(_device, width, height);
+            }
+
+            public void SetTextureData(object texture, System.Drawing.Rectangle bounds, byte[] data)
+            {
+                var mgTexture = (Texture2D)texture;
+                mgTexture.SetData(0, 0, new Microsoft.Xna.Framework.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height),
+                    data, 0, bounds.Width * bounds.Height * 4);
+            }
+        }
+
+        internal class Renderer : IFontStashRenderer
+        {
+            SpriteBatch _batch;
+
+            public Renderer(SpriteBatch batch)
+            {
+                if (batch == null)
+                {
+                    throw new ArgumentNullException(nameof(batch));
+                }
+
+                _batch = batch;
+            }
+
+            public void Draw(object texture, System.Numerics.Vector2 position, System.Drawing.Rectangle? sourceRectangle, System.Drawing.Color color, float rotation, System.Numerics.Vector2 origin, System.Numerics.Vector2 scale, float depth)
+            {
+                var textureWrapper = (Texture2D)texture;
+
+                _batch.Draw(textureWrapper,
+                    position.ToXNA(),
+                    sourceRectangle == null ? default(Microsoft.Xna.Framework.Rectangle?) : sourceRectangle.Value.ToXNA(),
+                    color.ToXNA(),
+                    rotation,
+                    origin.ToXNA(),
+                    scale.ToXNA(),
+                    SpriteEffects.None,
+                    depth);
+            }
+        }
+
+
+
+
+
+
         CurrentClientState currentState = new CurrentClientState(null, new ConcurrentDictionary<Guid, GameObject>(), new ConcurrentDictionary<Guid, GameEntities.GameEntity>());
 
         public static MessagePackSerializerOptions SerializerSettings
@@ -44,7 +109,7 @@ namespace Playerdom.Shared
         Texture2D merchantTexture = null;
         Texture2D dylangtechTexture = null;
 
-        SpriteFont debugFont = null;
+        DynamicSpriteFont debugFont = null;
         Texture2D defaultRectangle = null;
 
 
@@ -112,8 +177,6 @@ namespace Playerdom.Shared
             newThread1.Start();
             newThread2.Start();
 
-
-
             Window.TextInput += (sender, e) =>
             {
                 if(focusedObjectId.HasValue)
@@ -143,6 +206,7 @@ namespace Playerdom.Shared
 
                     if (isTyping)
                     {
+                        /*
                         if (debugFont.Characters.Contains(e.Character))
                         {
                             char key = e.Character;
@@ -228,6 +292,8 @@ namespace Playerdom.Shared
 
                             typedMessage += key;
                         }
+                        */
+                        typedMessage += e.Character;
                     }
                 }
                 else
@@ -252,6 +318,7 @@ namespace Playerdom.Shared
                         else if(!passwordSelected && username.Length > 0) username = username.Substring(0, username.Length - 1);
                         return;
                     }
+                    /*
                         if (debugFont.Characters.Contains(e.Character))
                         {
                             char key = e.Character;
@@ -332,10 +399,14 @@ namespace Playerdom.Shared
                                         break;
                                 }
                             }
-
+                    
                         if (passwordSelected) password += key;
                         else username += key;
                     }
+                    */
+
+                    if (passwordSelected) password += e.Character;
+                    else username += e.Character;
                 }
             };
         }
@@ -354,7 +425,12 @@ namespace Playerdom.Shared
 
             Tile.LoadTextures(this.Content, this.GraphicsDevice);
 
-            debugFont = this.Content.Load<SpriteFont>("font_debug");
+            //debugFont = this.Content.Load<SpriteFont>("font_debug");
+            FontSystem fontSystem = new FontSystem(StbTrueTypeSharpFontLoader.Instance, new Texture2DManager(this.GraphicsDevice), 1024, 1024, 0, 0, true);
+            fontSystem.AddFont(File.ReadAllBytes(@"Content/seguiemj.ttf"));
+            debugFont = fontSystem.GetFont(16);
+
+
             defaultRectangle = new Texture2D(GraphicsDevice, 1, 1);
 
             Color[] data = new Color[1];
@@ -399,8 +475,8 @@ namespace Playerdom.Shared
                 string usernameString = $"Username: {username}";
                 string passwordString = $"Password: {"".PadLeft(password.Length, '*')}";
 
-                Vector2 usernameSize = debugFont.MeasureString(usernameString);
-                Vector2 passwordSize = debugFont.MeasureString(passwordString);
+                Vector2 usernameSize = debugFont.MeasureString(usernameString).ToXNA();
+                Vector2 passwordSize = debugFont.MeasureString(passwordString).ToXNA();
 
                 Vector2 usernameLocation = new Vector2(scene.Width / 2 - usernameSize.X / 2, scene.Height / 2 - usernameSize.Y / 2 - 32);
                 Vector2 passwordLocation = new Vector2(scene.Width / 2 - passwordSize.X / 2, scene.Height / 2 - passwordSize.Y / 2 + 32);
@@ -408,9 +484,10 @@ namespace Playerdom.Shared
                 if (!passwordSelected) spriteBatch.Draw(defaultRectangle, new Rectangle(usernameLocation.ToPoint(), usernameSize.ToPoint()), Color.Green);
                 else spriteBatch.Draw(defaultRectangle, new Rectangle(passwordLocation.ToPoint(), passwordSize.ToPoint()), Color.Green);
 
-                spriteBatch.DrawString(debugFont, usernameString, usernameLocation, Color.White);
-                spriteBatch.DrawString(debugFont, passwordString, passwordLocation, Color.White);
-
+                //spriteBatch.DrawString(debugFont, usernameString, usernameLocation, Color.White);
+                //spriteBatch.DrawString(debugFont, passwordString, passwordLocation, Color.White);
+                debugFont.DrawText(new Renderer(spriteBatch), usernameString, usernameLocation.ToGeneric(), Color.White.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch), passwordString, passwordLocation.ToGeneric(), Color.White.ToGeneric());
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);
@@ -501,7 +578,7 @@ namespace Playerdom.Shared
                                     foreach (GameObject obj in currentState.Objects.Values)
                                     {
                                         string label = $"{obj.Name} [{obj.Level}]";
-                                        Vector2 size = debugFont.MeasureString(label);
+                                        Vector2 size = debugFont.MeasureString(label).ToXNA();
 
                                         Rectangle healthBarRect = new Rectangle((int)((obj.Coordinates.Item1 - focusedObjectCoordinates.Item1 - obj.Size.Item1 * 1.25 / 2) * (double)Tile.SIZE + scene.Width / 2), (int)((obj.Coordinates.Item2 - focusedObjectCoordinates.Item2) * (double)Tile.SIZE - (double)(obj.Size.Item2 * Tile.SIZE / 2) - 12 + scene.Height / 2), (int)(obj.Size.Item2 * 1.25 * (double)Tile.SIZE), (int)(12));
 
@@ -520,13 +597,16 @@ namespace Playerdom.Shared
 
                                         Rectangle r1 = new Rectangle(new Point((int)((obj.Coordinates.Item1 - focusedObjectCoordinates.Item1) * (double)Tile.SIZE) + scene.Width / 2 - (int)(size.X / 2), (int)((obj.Coordinates.Item2 - focusedObjectCoordinates.Item2) * (double)Tile.SIZE - (double)(obj.Size.Item2 * Tile.SIZE / 2)) + scene.Height / 2 - (int)(size.Y / 2) - (int)(Tile.SIZE / 4)), new Point((int)size.X, (int)size.Y));
 
-                                        spriteBatch.DrawString(debugFont, label, new Vector2(r1.X, r1.Y - 12), Color.White);
+                                        //spriteBatch.DrawString(debugFont, label, new Vector2(r1.X, r1.Y - 12), Color.White);
+                                        debugFont.DrawText(new Renderer(spriteBatch), label, new Vector2(r1.X, r1.Y - 12).ToGeneric(), Color.White.ToGeneric());
+
                                     }
 
-                                    string watermark = "Playerdom Test - Copyright 2021 Dylan Green";
-                                    Vector2 watermarkSize = debugFont.MeasureString(watermark);
+                                    string watermark = "Playerdom Test 💻 - Copyright © 2021 Dylan Green";
+                                    Vector2 watermarkSize = debugFont.MeasureString(watermark).ToXNA();
 
-                                    spriteBatch.DrawString(debugFont, watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y), Color.White);
+                                    //spriteBatch.DrawString(debugFont, watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y), Color.White);
+                                    debugFont.DrawText(new Renderer(spriteBatch), watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y).ToGeneric(), Color.White.ToGeneric());
 
 
                                 }
@@ -535,14 +615,16 @@ namespace Playerdom.Shared
 
                 string posString = $"Dimension: {dimensionId}, X: {copyP.Item1:0.000000}, Y: {copyP.Item2:0.000000}";
 
-                spriteBatch.DrawString(debugFont, posString, new Vector2(0.0f, 0.0f), Color.DarkRed);
+                //spriteBatch.DrawString(debugFont, posString, new Vector2(0.0f, 0.0f), Color.DarkRed);
+                debugFont.DrawText(new Renderer(spriteBatch), posString, new Vector2(0.0f, 0.0f).ToGeneric(), Color.DarkRed.ToGeneric());
+
 
                 Vector2 position = new Vector2(16, 48);
                 foreach (ChatMessage message in messages.ToArray())
                 {
                     Color color;
                     string content = $"{message.TimeSent.ToLocalTime().ToShortTimeString()} - {message.Sender}: {message.Content}";
-                    Vector2 size = debugFont.MeasureString(content);
+                    Vector2 size = debugFont.MeasureString(content).ToXNA();
 
                     switch (message.MessageType)
                     {
@@ -565,17 +647,19 @@ namespace Playerdom.Shared
 
                     Rectangle location = new Rectangle(position.ToPoint(), size.ToPoint());
                     spriteBatch.Draw(defaultRectangle, location, Color.Black);
-                    spriteBatch.DrawString(debugFont, content, position, color);
+                    //spriteBatch.DrawString(debugFont, content, position, color);
+                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), Color.White.ToGeneric());
                     position.Y += location.Height;
                 }
 
                 if (isTyping)
                 {
                     string content = $">: " + typedMessage;
-                    Vector2 size = debugFont.MeasureString(content);
+                    Vector2 size = debugFont.MeasureString(content).ToXNA();
 
                     spriteBatch.Draw(defaultRectangle, new Rectangle(position.ToPoint(), size.ToPoint()), Color.Black);
-                    spriteBatch.DrawString(debugFont, content, position, Color.White);
+                    //spriteBatch.DrawString(debugFont, content, position, Color.White);
+                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), Color.White.ToGeneric());
                 }
 
 

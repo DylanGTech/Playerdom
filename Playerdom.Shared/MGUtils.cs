@@ -136,5 +136,37 @@ namespace Playerdom.Shared
 
             return value;
         }
+
+
+        public static Vector2 ToXNA(this System.Numerics.Vector2 vec)
+        {
+            return new Vector2(vec.X, vec.Y);
+        }
+
+        public static Rectangle ToXNA(this System.Drawing.Rectangle rec)
+        {
+            return new Rectangle(rec.X, rec.Y, rec.Width, rec.Height);
+        }
+
+        public static Color ToXNA(this System.Drawing.Color col)
+        {
+            return new Color(col.R, col.G, col.B, col.A);
+        }
+
+
+        public static System.Numerics.Vector2 ToGeneric(this Vector2 vec)
+        {
+            return new System.Numerics.Vector2(vec.X, vec.Y);
+        }
+
+        public static System.Drawing.Rectangle ToGeneric(this Rectangle rec)
+        {
+            return new System.Drawing.Rectangle(rec.X, rec.Y, rec.Width, rec.Height);
+        }
+
+        public static System.Drawing.Color ToGeneric(this Color col)
+        {
+            return System.Drawing.Color.FromArgb(col.A, col.R, col.G, col.B);
+        }
     }
 }

@@ -47,9 +47,6 @@ namespace Playerdom.Server.Models
             _tcpClient = tcpClient;
             _netStream = tcpClient.GetStream();
 
-            //_sendCeras = new CerasSerializer(PlayerdomGame.SerializerSettings);
-            //_receiveCeras = new CerasSerializer(PlayerdomGame.SerializerSettings);
-
             FocusedObjectId = null;
             InputState = new Keys[] { };
             LastUpdate = DateTime.Now;

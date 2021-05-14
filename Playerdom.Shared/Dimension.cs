@@ -23,9 +23,9 @@ namespace Playerdom.Shared
         {
             DefaultSeedString = defaultSeedString + id.ToString();
 
-            Discolorization = ((float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "h", 0, 0.15, 1, -1),
-                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "s", 0, 0.20, 1, -1),
-                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "v", 0, 0.10, 1, -1));
+            Discolorization = ((float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "h", 0, 0.10, 1, -1),
+                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "s", 0, 0.15, 1, -1),
+                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "v", 0, 0.05, 1, -1));
 
             Map = new Map();
         }
