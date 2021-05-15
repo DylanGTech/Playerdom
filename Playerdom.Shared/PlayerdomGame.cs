@@ -427,7 +427,11 @@ namespace Playerdom.Shared
 
             //debugFont = this.Content.Load<SpriteFont>("font_debug");
             FontSystem fontSystem = new FontSystem(StbTrueTypeSharpFontLoader.Instance, new Texture2DManager(this.GraphicsDevice), 1024, 1024, 0, 0, true);
-            fontSystem.AddFont(File.ReadAllBytes(@"Content/seguiemj.ttf"));
+
+
+
+            string fontPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Content/seguiemj.ttf");
+            fontSystem.AddFont(File.ReadAllBytes(fontPath));
             debugFont = fontSystem.GetFont(16);
 
 

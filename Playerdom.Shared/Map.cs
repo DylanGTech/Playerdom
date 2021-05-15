@@ -176,10 +176,10 @@ namespace Playerdom.Shared
                             }
                         }
 
-                        dimensionRngString = defaultRngString + (dimensionId - 1);
+                        dimensionRngString = defaultRngString + dimensionId;
                         noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
                         rng = new Random((xCoord + dimensionRngString + yCoord).ToSeed());
-                        r = new Random(dimensionId - 1);
+                        r = new Random(dimensionId);
                         for (byte y = 0; y < Chunk.SIZE; y++)
                         {
                             for (byte x = 0; x < Chunk.SIZE; x++)

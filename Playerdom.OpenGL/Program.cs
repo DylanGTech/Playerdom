@@ -17,7 +17,7 @@ namespace Playerdom.OpenGL
 
             try
             {
-                string connection = File.ReadAllText("Connection.txt");
+                string connection = File.ReadAllText(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Connection.txt"));
                 if(IPEndPoint.TryParse(connection, out IPEndPoint result))
                 {
                     if (result != null) serverEndpoint = result;
@@ -26,7 +26,6 @@ namespace Playerdom.OpenGL
             }
             catch(Exception)
             {
-
             }
 
 
