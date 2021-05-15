@@ -19,6 +19,7 @@ using System.Threading;
 using DynamicData.Kernel;
 using Playerdom.Shared.GameEntities;
 using Microsoft.Data.Sqlite;
+using System.Drawing.Drawing2D;
 
 namespace Playerdom.Server.Models
 {
@@ -61,13 +62,13 @@ namespace Playerdom.Server.Models
 
         public void ChangeDimensions(ushort dimensionId)
         {
-            server.dimensions[DimensionId].Map.LoadedObjects.TryRemove(FocusedObjectId.Value, out GameObject p);
+            server.Dimensions[DimensionId].Map.LoadedObjects.TryRemove(FocusedObjectId.Value, out GameObject p);
 
             server.LoadDimension(dimensionId);
-            server.dimensions[dimensionId].Map.LoadedObjects.TryAdd(FocusedObjectId.Value, p);
+            server.Dimensions[dimensionId].Map.LoadedObjects.TryAdd(FocusedObjectId.Value, p);
             DimensionId = dimensionId;
 
-            (float hue, float sat, float val) = server.dimensions[DimensionId].Discolorization;
+            (float hue, float sat, float val) = server.Dimensions[DimensionId].Discolorization;
             ClientPack pack = new ClientPack() { CurrentMessage = new ServerMessage() { MessageType = "changeDimension", MessageContent = new string[4] { DimensionId.ToString(), hue.ToString(), sat.ToString(), val.ToString() } } };
             externalPacks.Enqueue(pack);
 
@@ -84,14 +85,14 @@ namespace Playerdom.Server.Models
             DimensionId = dimensionId;
 
             server.LoadDimension(DimensionId);
-            server.dimensions[DimensionId].Map.LoadedObjects.TryAdd(FocusedObjectId.Value, p);
+            server.Dimensions[DimensionId].Map.LoadedObjects.TryAdd(FocusedObjectId.Value, p);
             ClientPack pack = new ClientPack() { CurrentMessage = new ServerMessage() { MessageType = "focusedObjectId", MessageContent = new string[1] { FocusedObjectId.Value.ToString() } } };
 
             Task.Delay(2000).Wait();
             externalPacks.Enqueue(pack);
 
             Task.Delay(2000).Wait();
-            (float hue, float sat, float val) = server.dimensions[DimensionId].Discolorization;
+            (float hue, float sat, float val) = server.Dimensions[DimensionId].Discolorization;
             pack = new ClientPack() { CurrentMessage = new ServerMessage() { MessageType = "changeDimension", MessageContent = new string[4] { DimensionId.ToString(), hue.ToString(), sat.ToString(), val.ToString() } } };
             externalPacks.Enqueue(pack);
 
@@ -107,19 +108,19 @@ namespace Playerdom.Server.Models
                 {
                     try
                     {
-                        if (UserId.HasValue && FocusedObjectId.HasValue && server.dimensions[DimensionId].Map.LoadedObjects.ContainsKey(FocusedObjectId.Value))
+                        if (UserId.HasValue && FocusedObjectId.HasValue && server.Dimensions[DimensionId].Map.LoadedObjects.ContainsKey(FocusedObjectId.Value))
                         {
-                            GameObject go = server.dimensions[DimensionId].Map.LoadedObjects[FocusedObjectId.Value];
+                            GameObject go = server.Dimensions[DimensionId].Map.LoadedObjects[FocusedObjectId.Value];
 
                             //Deep Clone to make thread-safe
                             //TODO: Make it more efficient
                             ConcurrentDictionary<Guid, GameObject> objClone;
                             ConcurrentDictionary<Guid, GameEntity> entClone;
-                            lock (server.dimensions[DimensionId].Map.LoadedObjects)
-                                objClone = MessagePackSerializer.Deserialize<ConcurrentDictionary<Guid, GameObject>>(MessagePackSerializer.Serialize(server.dimensions[DimensionId].Map.LoadedObjects));
+                            lock (server.Dimensions[DimensionId].Map.LoadedObjects)
+                                objClone = MessagePackSerializer.Deserialize<ConcurrentDictionary<Guid, GameObject>>(MessagePackSerializer.Serialize(server.Dimensions[DimensionId].Map.LoadedObjects));
 
-                            lock (server.dimensions[DimensionId].Map.LoadedEntities)
-                                entClone = MessagePackSerializer.Deserialize<ConcurrentDictionary<Guid, GameEntity>>(MessagePackSerializer.Serialize(server.dimensions[DimensionId].Map.LoadedEntities));
+                            lock (server.Dimensions[DimensionId].Map.LoadedEntities)
+                                entClone = MessagePackSerializer.Deserialize<ConcurrentDictionary<Guid, GameEntity>>(MessagePackSerializer.Serialize(server.Dimensions[DimensionId].Map.LoadedEntities));
 
 
                             ConcurrentDictionary<Guid, GameObject> objCloneToSend = new ConcurrentDictionary<Guid, GameObject>();
@@ -157,13 +158,13 @@ namespace Playerdom.Server.Models
                                     }
 
 
-                                    ClientPack pack = new ClientPack() { Chunks = server.dimensions[DimensionId].Map.GetLocalChunks(objCloneToSend[FocusedObjectId.Value].Coordinates.Item1, objCloneToSend[FocusedObjectId.Value].Coordinates.Item2, DimensionId, Path.Combine(server.saveDirectoryPath, "dimensions", DimensionId.ToString()), server.dimensions[DimensionId].DefaultSeedString), GameObjects = objCloneToSend, GameEntities = entCloneToSend, NewChats = messages };
+                                    ClientPack pack = new ClientPack() { Chunks = server.Dimensions[DimensionId].Map.GetLocalChunks(objCloneToSend[FocusedObjectId.Value].Coordinates.Item1, objCloneToSend[FocusedObjectId.Value].Coordinates.Item2, DimensionId, Path.Combine(server.saveDirectoryPath, "Dimensions", DimensionId.ToString()), server.Dimensions[DimensionId].DefaultSeedString), GameObjects = objCloneToSend, GameEntities = entCloneToSend, NewChats = messages };
                                     Send(pack);
                                 }
                                 else
                                 {
                                     //throw new Exception("Player object removed");
-                                    //Player object now CAN be removed when the player is shifting dimensions. Just don't send them anything this round
+                                    //Player object now CAN be removed when the player is shifting Dimensions. Just don't send them anything this round
                                 }
                             }
                         }
@@ -231,7 +232,11 @@ namespace Playerdom.Server.Models
         private void HandleMessage(ServerPack obj)
         {
             InputState = obj.KeysPressed;
-            if (obj.CurrentMessage != null && obj.CurrentMessage.MessageType == "login" && !FocusedObjectId.HasValue)
+            LastUpdate = DateTime.Now;
+
+            if (obj.CurrentMessage == null) return;
+
+            if (obj.CurrentMessage.MessageType == "login" && !FocusedObjectId.HasValue)
             {
 
                 using (SqliteCommand command = server.connection.CreateCommand())
@@ -290,33 +295,6 @@ namespace Playerdom.Server.Models
 
                     
             }
-            else if (obj.CurrentMessage != null && obj.CurrentMessage.MessageType.StartsWith("chat_") && FocusedObjectId.HasValue && server.dimensions[DimensionId].Map.LoadedObjects.TryGetValue(FocusedObjectId.Value, out GameObject gameObj))
-            {
-
-                //TODO: Check if user is mod/admin/owner
-                ChatMessageTypes type = ChatMessageTypes.Player;
-
-                switch(obj.CurrentMessage.MessageType.Remove(0, "chat_".Length))
-                {
-                    default:
-                        break;
-                    case "global":
-                        server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = DimensionId, MessageScope = ChatMessageScopes.Global, MessageType = type, PlaceSent = gameObj.Coordinates, TimeSent = DateTime.Now, Content = obj.CurrentMessage.MessageContent[0], Sender = Name, SenderObjectId = FocusedObjectId.Value });
-                        break;
-                    case "dimension":
-                        server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = DimensionId, MessageScope = ChatMessageScopes.Dimension, MessageType = type, PlaceSent = gameObj.Coordinates, TimeSent = DateTime.Now, Content = obj.CurrentMessage.MessageContent[0], Sender = Name, SenderObjectId = FocusedObjectId.Value });
-                        break;
-                    case "party":
-                        server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = DimensionId, MessageScope = ChatMessageScopes.Party, MessageType = type, PlaceSent = gameObj.Coordinates, TimeSent = DateTime.Now, Content = obj.CurrentMessage.MessageContent[0], Sender = Name, SenderObjectId = FocusedObjectId.Value });
-                        break;
-                    case "area":
-                        server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = DimensionId, MessageScope = ChatMessageScopes.Area, MessageType = type, PlaceSent = gameObj.Coordinates, TimeSent = DateTime.Now, Content = obj.CurrentMessage.MessageContent[0], Sender = Name, SenderObjectId = FocusedObjectId.Value });
-                        break;
-                    
-                }
-            }
-
-            LastUpdate = DateTime.Now;
         }
 
         private readonly object sendLock = new object();
@@ -334,11 +312,11 @@ namespace Playerdom.Server.Models
 
         public void SavePlayer()
         {
-            if (server.dimensions.ContainsKey(DimensionId))
+            if (server.Dimensions.ContainsKey(DimensionId))
             {
-                lock (server.dimensions[DimensionId].Map.LoadedObjects)
+                lock (server.Dimensions[DimensionId].Map.LoadedObjects)
                 {
-                    if (FocusedObjectId.HasValue && server.dimensions[DimensionId].Map.LoadedObjects.TryGetValue(FocusedObjectId.Value, out GameObject player))
+                    if (FocusedObjectId.HasValue && server.Dimensions[DimensionId].Map.LoadedObjects.TryGetValue(FocusedObjectId.Value, out GameObject player))
                     {
                         using (SqliteCommand command = server.connection.CreateCommand())
                         {

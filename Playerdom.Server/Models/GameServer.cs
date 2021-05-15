@@ -21,9 +21,12 @@ namespace Playerdom.Models
 {
     public class GameServer : IDisposable
     {
-        public ConcurrentDictionary<ushort, Dimension> dimensions = new ConcurrentDictionary<ushort, Dimension>();
-        public readonly List<GameServerClient> Clients = new List<GameServerClient>();
-        public ConcurrentQueue<ChatMessage> MessageQueue { get; set; } = new ConcurrentQueue<ChatMessage>();
+        public ConcurrentDictionary<ushort, Dimension> Dimensions { get; init; } = new ConcurrentDictionary<ushort, Dimension>();
+        public List<GameServerClient> Clients { get; init; } = new List<GameServerClient>();
+        public ConcurrentQueue<ChatMessage> MessageQueue { get; init; } = new ConcurrentQueue<ChatMessage>();
+
+        public ConcurrentQueue<(GameServerClient, ushort)> DimensionalShiftQueue { get; init; } = new ConcurrentQueue<(GameServerClient, ushort)>();
+
 
         public SqliteConnection connection
         {
@@ -108,7 +111,7 @@ namespace Playerdom.Models
                     logger("Player left from IP " + client.EndPointString);
                     Clients.Remove(client);
 
-                    if (client.FocusedObjectId.HasValue && dimensions.ContainsKey(client.DimensionId)) dimensions[client.DimensionId].Map.LoadedObjects.TryRemove(client.FocusedObjectId.Value, out GameObject value);
+                    if (client.FocusedObjectId.HasValue && Dimensions.ContainsKey(client.DimensionId)) Dimensions[client.DimensionId].Map.LoadedObjects.TryRemove(client.FocusedObjectId.Value, out GameObject value);
                     client.Dispose();
                 }
             }
@@ -151,16 +154,52 @@ namespace Playerdom.Models
 
                         if (client.LastUpdate.AddSeconds(45) > DateTime.Now)
                         {
-                            if (dimensions.ContainsKey(client.DimensionId))
+                            if (Dimensions.ContainsKey(client.DimensionId))
                             {
-                                lock (dimensions[client.DimensionId].Map.LoadedObjects)
+                                lock (Dimensions[client.DimensionId].Map.LoadedObjects)
                                 {
-                                    if (client.FocusedObjectId.HasValue && dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject obj))
+                                    if (client.FocusedObjectId.HasValue && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject obj))
                                     {
                                         (obj as Player).Keyboard = client.InputState;
                                     }
                                 }
                             }
+
+
+                            if (client.InputState != null && client.InputState.Contains(Keys.Q) && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj1))
+                            {
+                                lock (gameObj1)
+                                {
+                                    if (Dimensions[client.DimensionId].Map.TryGetTile(gameObj1.Coordinates, out Tile tile) && tile.TypeId == 5)
+                                    {
+                                        DimensionalShiftQueue.Enqueue((client, (ushort)(client.DimensionId + 1)));
+                                    }
+                                }
+                            }
+                            else if (client.InputState != null && client.InputState.Contains(Keys.E) && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj2))
+                            {
+                                lock (gameObj2)
+                                {
+                                    if (Dimensions[client.DimensionId].Map.TryGetTile(gameObj2.Coordinates, out Tile tile) && tile.TypeId == 5)
+                                    {
+                                        DimensionalShiftQueue.Enqueue((client, (ushort)(client.DimensionId - 1)));
+                                    }
+                                }
+                            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         }
                         else RemoveClient(client);
                     }
@@ -175,7 +214,7 @@ namespace Playerdom.Models
                         if (message.Content.StartsWith("/tp"))
                         {
                             string[] args = message.Content.Remove(0, 1).Split(" ");
-                            if(args.Length == 3 && double.TryParse(args[1], out double xCoord) && double.TryParse(args[2], out double yCoord) && dimensions.TryGetValue(message.DimensionSent, out Dimension d) && d.Map.LoadedObjects.TryGetValue(message.SenderObjectId, out GameObject teleportedObject))
+                            if(args.Length == 3 && double.TryParse(args[1], out double xCoord) && double.TryParse(args[2], out double yCoord) && Dimensions.TryGetValue(message.DimensionSent, out Dimension d) && d.Map.LoadedObjects.TryGetValue(message.SenderObjectId, out GameObject teleportedObject))
                             {
                                 teleportedObject.Coordinates = (xCoord, yCoord);
                             }
@@ -184,15 +223,14 @@ namespace Playerdom.Models
                         {
                             GameServerClient client = Clients.First(c => c.FocusedObjectId == message.SenderObjectId);
 
-                            lock (client)
-                                client.ChangeDimensions((ushort)(client.DimensionId + 1));
+                            DimensionalShiftQueue.Enqueue((client, (ushort)(client.DimensionId + 1)));
                         }
                         else if (message.Content.StartsWith("/descend") && message.SenderObjectId != Guid.Empty)
                         {
                             GameServerClient client = Clients.First(c => c.FocusedObjectId == message.SenderObjectId);
 
-                            lock (client)
-                                client.ChangeDimensions((ushort)(client.DimensionId - 1));
+                            DimensionalShiftQueue.Enqueue((client, (ushort)(client.DimensionId - 1)));
+
                         }
                         continue;
                     }
@@ -225,7 +263,7 @@ namespace Playerdom.Models
                             if (client.DimensionId != message.DimensionSent) continue;
 
                             Guid? objectId = client.FocusedObjectId;
-                            if(objectId.HasValue && dimensions[message.DimensionSent].Map.LoadedObjects.TryGetValue(objectId.Value, out GameObject gameObject))
+                            if(objectId.HasValue && Dimensions[message.DimensionSent].Map.LoadedObjects.TryGetValue(objectId.Value, out GameObject gameObject))
                             {
                                 if (Math.Sqrt(Math.Pow(gameObject.Coordinates.Item1 - message.PlaceSent.X, 2) + Math.Pow(gameObject.Coordinates.Item2 - message.PlaceSent.Y, 2)) < Chunk.SIZE * 2)
                                     client.MessageOutbox.Enqueue(message);
@@ -234,7 +272,7 @@ namespace Playerdom.Models
                     }    
                 }
 
-                foreach((ushort id, Dimension d) in dimensions)
+                foreach((ushort id, Dimension d) in Dimensions)
                 {
                     lock (d.Map.LoadedObjects)
                     {
@@ -289,7 +327,14 @@ namespace Playerdom.Models
                 }
 
 
-                if((DateTime.Now - LastSaveTime).TotalSeconds >= 60)
+
+
+                while(DimensionalShiftQueue.TryDequeue(out (GameServerClient c, ushort d) result))
+                {
+                    result.c.ChangeDimensions(result.d);
+                }
+
+                if ((DateTime.Now - LastSaveTime).TotalSeconds >= 60)
                 {
                     SavePlayers();
                     LastSaveTime = DateTime.Now;
@@ -310,17 +355,17 @@ namespace Playerdom.Models
 
         public void LoadDimension(ushort id)
         {
-            string dimensionsPath = Path.Combine(this.saveDirectoryPath, "dimensions");
+            string dimensionsPath = Path.Combine(this.saveDirectoryPath, "Dimensions");
             if (!Directory.Exists(dimensionsPath)) Directory.CreateDirectory(dimensionsPath);
 
-            dimensions.TryAdd(id, new Dimension("Hello", id));
+            Dimensions.TryAdd(id, new Dimension("Hello", id));
             if (!Directory.Exists(Path.Combine(dimensionsPath, id.ToString())))
                 Directory.CreateDirectory(Path.Combine(dimensionsPath, id.ToString()));
         }
 
         public void UnloadDimension(ushort id)
         {
-            dimensions.TryRemove(id, out Dimension value);
+            Dimensions.TryRemove(id, out Dimension value);
         }
 
 

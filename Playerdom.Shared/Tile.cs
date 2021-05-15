@@ -94,12 +94,14 @@ namespace Playerdom.Shared
             defaultTextures.Add(2, new Texture2D[] { content.Load<Texture2D>("water") });
             defaultTextures.Add(3, new Texture2D[] { content.Load<Texture2D>("stone") });
             defaultTextures.Add(4, new Texture2D[] { content.Load<Texture2D>("woodplanks") });
+            defaultTextures.Add(5, new Texture2D[] { content.Load<Texture2D>("portal") });
 
 
             textures.Add(1, new Texture2D[] { new Texture2D(device, defaultTextures[1][0].Width, defaultTextures[1][0].Height) });
             textures.Add(2, new Texture2D[] { new Texture2D(device, defaultTextures[2][0].Width, defaultTextures[2][0].Height) });
             textures.Add(3, new Texture2D[] { new Texture2D(device, defaultTextures[3][0].Width, defaultTextures[3][0].Height) });
             textures.Add(4, new Texture2D[] { new Texture2D(device, defaultTextures[4][0].Width, defaultTextures[4][0].Height) });
+            textures.Add(5, new Texture2D[] { new Texture2D(device, defaultTextures[5][0].Width, defaultTextures[5][0].Height) });
 
         }
 
@@ -112,7 +114,7 @@ namespace Playerdom.Shared
         2         | ~         | Water
         3         | ~         | Stone
         4         | ~         | Wood Planks
-
+        5         | ~         | Portal
         */
     }
 }

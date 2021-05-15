@@ -21,11 +21,13 @@ namespace Playerdom.Shared
         //Add other values needed to generate the dimensions as-needed
         public Dimension(string defaultSeedString, ushort id)
         {
-            DefaultSeedString = defaultSeedString + id.ToString();
+            DefaultSeedString = defaultSeedString;
 
-            Discolorization = ((float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "h", 0, 0.10, 1, -1),
-                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "s", 0, 0.15, 1, -1),
-                (float)MGUtils.GetNormalRandomDouble(DefaultSeedString + "v", 0, 0.05, 1, -1));
+            string dimensionSeed = DefaultSeedString + id.ToString();
+
+            Discolorization = ((float)MGUtils.GetNormalRandomDouble(dimensionSeed + "h", 0, 0.10, 1, -1),
+                (float)MGUtils.GetNormalRandomDouble(dimensionSeed + "s", 0, 0.15, 1, -1),
+                (float)MGUtils.GetNormalRandomDouble(dimensionSeed + "v", 0, 0.05, 1, -1));
 
             Map = new Map();
         }

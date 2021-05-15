@@ -62,8 +62,50 @@ namespace Playerdom.Shared
             return chunks;
         }
 
-        public Chunk LoadChunk(long xCoord, long yCoord, ushort dimensionId, string dimensionPath, string dimensionRngString)
+
+        public static Tile GetDefaultTile((double, double) coordinates, Random chunkRNG, CubicNoise noiseGenerator)
         {
+            coordinates = (Math.Round(coordinates.Item1, 0), Math.Round(coordinates.Item2, 0));
+            float f = noiseGenerator.Sample((coordinates.Item1) / Chunk.SIZE, (coordinates.Item2) / Chunk.SIZE);
+            Tile t = new Tile();
+
+            if (f > 0.5 - 0.0625 && f < 0.5 + 0.0625)
+            {
+                double xVal = ((double)coordinates.Item1) % 47;
+                double yVal = ((double)coordinates.Item2) % 47;
+
+                if ((xVal > 0 && xVal < 4) || (yVal > 0 && yVal < 4))
+                {
+                    t.TypeId = 4;
+                    t.VarientId = 0;
+                }
+                else
+                {
+                    t.TypeId = 2;
+                    t.VarientId = 0;
+                }
+            }
+            else if ((ushort)chunkRNG.Next(0, 1024) == 0)
+            {
+                t.TypeId = 3;
+                t.VarientId = 0;
+            }
+            else
+            {
+                t.TypeId = 1;
+                t.VarientId = 0;
+            }
+
+            return t;
+        }
+
+
+
+
+        public Chunk LoadChunk(long xCoord, long yCoord, ushort dimensionId, string dimensionPath, string defaultRngString)
+        {
+            string dimensionRngString = defaultRngString + dimensionId;
+
             lock (LoadedChunks)
             {
                 //TODO: Generate chunks
@@ -106,39 +148,45 @@ namespace Playerdom.Shared
 
                         string fullRngString = xCoord + dimensionRngString + yCoord;
                         CubicNoise noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        Random rng = new Random(fullRngString.ToSeed());
 
 
-                        Random rng = new Random((dimensionRngString + xCoord + yCoord).ToSeed());
-                        for (int y = 0; y < Chunk.SIZE; y++)
+                        for (byte y = 0; y < Chunk.SIZE; y++)
                         {
-                            for (int x = 0; x < Chunk.SIZE; x++)
+                            for (byte x = 0; x < Chunk.SIZE; x++)
                             {
-                                float f = noiseGenerator.Sample(((double)xCoord * Chunk.SIZE + x) / Chunk.SIZE, ((double)yCoord * Chunk.SIZE + y) / Chunk.SIZE);
+                                t[x, y] = GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator);
+                            }
+                        }
 
-                                if (f > 0.5 - 0.0625 && f < 0.5 + 0.0625)
-                                {
-                                    double xVal = ((double)xCoord * Chunk.SIZE + x) % 47;
-                                    double yVal = ((double)yCoord * Chunk.SIZE + y) % 47;
 
-                                    if ((xVal > 0 && xVal < 4) || (yVal > 0 && yVal < 4))
-                                    {
-                                        t[x, y].TypeId = 4;
-                                        t[x, y].VarientId = 0;
-                                    }
-                                    else
-                                    {
-                                        t[x, y].TypeId = 2;
-                                        t[x, y].VarientId = 0;
-                                    }
-                                }
-                                else if ((byte)rng.Next(0, 1024) == 0)
+                        dimensionRngString = defaultRngString + (dimensionId + 1);
+                        noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        rng = new Random((xCoord + dimensionRngString + yCoord).ToSeed());
+                        Random r = new Random(dimensionId + 1);
+                        for (byte y = 0; y < Chunk.SIZE; y++)
+                        {
+                            for (byte x = 0; x < Chunk.SIZE; x++)
+                            {
+                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator).TypeId == 1)
                                 {
-                                    t[x, y].TypeId = 3;
+                                    t[x, y].TypeId = 5;
                                     t[x, y].VarientId = 0;
                                 }
-                                else
+                            }
+                        }
+
+                        dimensionRngString = defaultRngString + (dimensionId - 1);
+                        noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        rng = new Random((xCoord + dimensionRngString + yCoord).ToSeed());
+                        r = new Random(dimensionId - 1);
+                        for (byte y = 0; y < Chunk.SIZE; y++)
+                        {
+                            for (byte x = 0; x < Chunk.SIZE; x++)
+                            {
+                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator).TypeId == 1)
                                 {
-                                    t[x, y].TypeId = 1;
+                                    t[x, y].TypeId = 5;
                                     t[x, y].VarientId = 0;
                                 }
                             }
@@ -232,7 +280,6 @@ namespace Playerdom.Shared
                     catch (Exception)
                     {
                         //TODO: Report this to the console
-                        
                     }
                 }
             }
@@ -256,6 +303,22 @@ namespace Playerdom.Shared
         public static (double, double) IndecesToPosition((long, long) chunkIndex, (byte, byte) tileIndex)
         {
             return ((double)chunkIndex.Item1 * (double)Chunk.SIZE + (double)tileIndex.Item1 + 0.5, (double)chunkIndex.Item2 * (double)Chunk.SIZE + (double)tileIndex.Item2 + 0.5);
+        }
+
+
+        public bool TryGetTile((double, double) coordinates, out Tile tile)
+        {
+            coordinates = (Math.Round(coordinates.Item1, 0, MidpointRounding.AwayFromZero), Math.Truncate(coordinates.Item2));
+            (byte, byte) tileIndex = Map.PositionToTileIndex(coordinates);
+
+            if(LoadedChunks.TryGetValue(Map.PositionToChunkIndex(coordinates), out Chunk value))
+            {
+                tile = value.Tiles[tileIndex.Item1, tileIndex.Item2];
+                return true;
+            }
+
+            tile = new Tile();
+            return false;
         }
     }
 }

@@ -100,17 +100,17 @@ namespace Playerdom.Server.ViewModels
                         {
                             NumPlayers = (uint)Server.Clients.Count;
 
-                            if (Dimensions != null && Dimensions.Count == 0 && Server.dimensions.Count > 0)
+                            if (Dimensions != null && Dimensions.Count == 0 && Server.Dimensions.Count > 0)
                             {
-                                Dimensions = Server.dimensions.Keys.ToList();
+                                Dimensions = Server.Dimensions.Keys.ToList();
 
-                                if(!Server.dimensions.Keys.Contains(SelectedDimension))
-                                    SelectedDimension = Server.dimensions.Keys.First();
+                                if(!Server.Dimensions.Keys.Contains(SelectedDimension))
+                                    SelectedDimension = Server.Dimensions.Keys.First();
                             }
-                            Dimensions = Server.dimensions.Keys.ToList();
+                            Dimensions = Server.Dimensions.Keys.ToList();
 
-                            NumLoadedChunks = (uint)Server.dimensions[SelectedDimension].Map.LoadedChunks.Count;
-                            NumLoadedObjects = (uint)Server.dimensions[SelectedDimension].Map.LoadedObjects.Count;
+                            NumLoadedChunks = (uint)Server.Dimensions[SelectedDimension].Map.LoadedChunks.Count;
+                            NumLoadedObjects = (uint)Server.Dimensions[SelectedDimension].Map.LoadedObjects.Count;
 
                             this.RaisePropertyChanged("IsRunning");
                             Thread.Sleep(1000);
