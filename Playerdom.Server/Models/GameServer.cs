@@ -165,8 +165,7 @@ namespace Playerdom.Models
                                 }
                             }
 
-
-                            if (client.InputState != null && client.InputState.Contains(Keys.Q) && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj1))
+                            if (client.InputState != null && client.InputState.Contains(Keys.Q) && client.FocusedObjectId.HasValue && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj1))
                             {
                                 lock (gameObj1)
                                 {
@@ -176,7 +175,7 @@ namespace Playerdom.Models
                                     }
                                 }
                             }
-                            else if (client.InputState != null && client.InputState.Contains(Keys.E) && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj2))
+                            else if (client.InputState != null && client.InputState.Contains(Keys.E) && client.FocusedObjectId.HasValue && Dimensions[client.DimensionId].Map.LoadedObjects.TryGetValue(client.FocusedObjectId.Value, out GameObject gameObj2))
                             {
                                 lock (gameObj2)
                                 {
@@ -186,20 +185,6 @@ namespace Playerdom.Models
                                     }
                                 }
                             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                         }
                         else RemoveClient(client);
                     }

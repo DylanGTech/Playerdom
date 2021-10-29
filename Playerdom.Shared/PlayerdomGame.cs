@@ -38,10 +38,7 @@ namespace Playerdom.Shared
 
             public Texture2DManager(GraphicsDevice device)
             {
-                if (device == null)
-                {
-                    throw new ArgumentNullException(nameof(device));
-                }
+                ArgumentNullException.ThrowIfNull(device);
 
                 _device = device;
             }
@@ -49,6 +46,11 @@ namespace Playerdom.Shared
             public object CreateTexture(int width, int height)
             {
                 return new Texture2D(_device, width, height);
+            }
+
+            public System.Drawing.Point GetTextureSize(object texture)
+            {
+                return new System.Drawing.Point(((Texture2D)texture).Width, ((Texture2D)texture).Height);
             }
 
             public void SetTextureData(object texture, System.Drawing.Rectangle bounds, byte[] data)
@@ -62,16 +64,18 @@ namespace Playerdom.Shared
         internal class Renderer : IFontStashRenderer
         {
             SpriteBatch _batch;
+            Texture2DManager _textures;
 
-            public Renderer(SpriteBatch batch)
+            public Renderer(SpriteBatch batch, Texture2DManager textures)
             {
-                if (batch == null)
-                {
-                    throw new ArgumentNullException(nameof(batch));
-                }
+                ArgumentNullException.ThrowIfNull(batch);
+                ArgumentNullException.ThrowIfNull(textures);
 
                 _batch = batch;
+                _textures = textures;
             }
+
+            public ITexture2DManager TextureManager => _textures;
 
             public void Draw(object texture, System.Numerics.Vector2 position, System.Drawing.Rectangle? sourceRectangle, System.Drawing.Color color, float rotation, System.Numerics.Vector2 origin, System.Numerics.Vector2 scale, float depth)
             {
@@ -105,14 +109,14 @@ namespace Playerdom.Shared
             }
         }
         
-        Texture2D playerTexture = null;
-        Texture2D merchantTexture = null;
-        Texture2D dylangtechTexture = null;
+        Texture2D playerTexture;
+        Texture2D merchantTexture;
+        Texture2D dylangtechTexture;
 
-        DynamicSpriteFont debugFont = null;
-        Texture2D defaultRectangle = null;
+        DynamicSpriteFont debugFont;
+        Texture2D defaultRectangle;
 
-
+        Texture2DManager textures;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         RenderTarget2D scene;
@@ -120,8 +124,8 @@ namespace Playerdom.Shared
         TcpClient _tcpClient;
         NetworkStream _netStream;
 
-        Guid? token = null;
-        Guid? focusedObjectId = null;
+        Guid? token;
+        Guid? focusedObjectId;
 
 
         ushort dimensionId = 0;
@@ -425,16 +429,22 @@ namespace Playerdom.Shared
 
             Tile.LoadTextures(this.Content, this.GraphicsDevice);
 
+
+            FontSystemSettings fontSettings = new FontSystemSettings()
+            {
+                KernelWidth = 0,
+                KernelHeight = 0,
+                TextureWidth = 1024,
+                TextureHeight = 1024,
+            };
             //debugFont = this.Content.Load<SpriteFont>("font_debug");
-            FontSystem fontSystem = new FontSystem(StbTrueTypeSharpFontLoader.Instance, new Texture2DManager(this.GraphicsDevice), 1024, 1024, 0, 0, true);
-
-
+            FontSystem fontSystem = new FontSystem(fontSettings);
 
             string fontPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Content/seguiemj.ttf");
             fontSystem.AddFont(File.ReadAllBytes(fontPath));
             debugFont = fontSystem.GetFont(16);
 
-
+            textures = new Texture2DManager(GraphicsDevice);
             defaultRectangle = new Texture2D(GraphicsDevice, 1, 1);
 
             Color[] data = new Color[1];
@@ -490,8 +500,8 @@ namespace Playerdom.Shared
 
                 //spriteBatch.DrawString(debugFont, usernameString, usernameLocation, Color.White);
                 //spriteBatch.DrawString(debugFont, passwordString, passwordLocation, Color.White);
-                debugFont.DrawText(new Renderer(spriteBatch), usernameString, usernameLocation.ToGeneric(), Color.White.ToGeneric());
-                debugFont.DrawText(new Renderer(spriteBatch), passwordString, passwordLocation.ToGeneric(), Color.White.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch, textures), usernameString, usernameLocation.ToGeneric(), Color.White.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch, textures), passwordString, passwordLocation.ToGeneric(), Color.White.ToGeneric());
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);
@@ -602,7 +612,7 @@ namespace Playerdom.Shared
                                         Rectangle r1 = new Rectangle(new Point((int)((obj.Coordinates.Item1 - focusedObjectCoordinates.Item1) * (double)Tile.SIZE) + scene.Width / 2 - (int)(size.X / 2), (int)((obj.Coordinates.Item2 - focusedObjectCoordinates.Item2) * (double)Tile.SIZE - (double)(obj.Size.Item2 * Tile.SIZE / 2)) + scene.Height / 2 - (int)(size.Y / 2) - (int)(Tile.SIZE / 4)), new Point((int)size.X, (int)size.Y));
 
                                         //spriteBatch.DrawString(debugFont, label, new Vector2(r1.X, r1.Y - 12), Color.White);
-                                        debugFont.DrawText(new Renderer(spriteBatch), label, new Vector2(r1.X, r1.Y - 12).ToGeneric(), Color.White.ToGeneric());
+                                        debugFont.DrawText(new Renderer(spriteBatch, textures), label, new Vector2(r1.X, r1.Y - 12).ToGeneric(), Color.White.ToGeneric());
 
                                     }
 
@@ -610,7 +620,7 @@ namespace Playerdom.Shared
                                     Vector2 watermarkSize = debugFont.MeasureString(watermark).ToXNA();
 
                                     //spriteBatch.DrawString(debugFont, watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y), Color.White);
-                                    debugFont.DrawText(new Renderer(spriteBatch), watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y).ToGeneric(), Color.White.ToGeneric());
+                                    debugFont.DrawText(new Renderer(spriteBatch, textures), watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y).ToGeneric(), Color.White.ToGeneric());
 
 
                                 }
@@ -620,7 +630,7 @@ namespace Playerdom.Shared
                 string posString = $"Dimension: {dimensionId}, X: {copyP.Item1:0.000000}, Y: {copyP.Item2:0.000000}";
 
                 //spriteBatch.DrawString(debugFont, posString, new Vector2(0.0f, 0.0f), Color.DarkRed);
-                debugFont.DrawText(new Renderer(spriteBatch), posString, new Vector2(0.0f, 0.0f).ToGeneric(), Color.DarkRed.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch, textures), posString, new Vector2(0.0f, 0.0f).ToGeneric(), Color.DarkRed.ToGeneric());
 
 
                 Vector2 position = new Vector2(16, 48);
@@ -652,7 +662,7 @@ namespace Playerdom.Shared
                     Rectangle location = new Rectangle(position.ToPoint(), size.ToPoint());
                     spriteBatch.Draw(defaultRectangle, location, Color.Black);
                     //spriteBatch.DrawString(debugFont, content, position, color);
-                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), color.ToGeneric());
+                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), color.ToGeneric());
                     position.Y += location.Height;
                 }
 
@@ -663,7 +673,7 @@ namespace Playerdom.Shared
 
                     spriteBatch.Draw(defaultRectangle, new Rectangle(position.ToPoint(), size.ToPoint()), Color.Black);
                     //spriteBatch.DrawString(debugFont, content, position, Color.White);
-                    debugFont.DrawText(new Renderer(spriteBatch), content, position.ToGeneric(), Color.White.ToGeneric());
+                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), Color.White.ToGeneric());
                 }
 
 

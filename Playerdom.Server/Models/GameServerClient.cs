@@ -292,8 +292,43 @@ namespace Playerdom.Server.Models
                         }
                     }
                 }
+            }
+            else if (FocusedObjectId.HasValue)
+            {
+                if (obj.CurrentMessage.MessageType.StartsWith("chat_") && obj.CurrentMessage.MessageType.Length > "chat_".Length && obj.CurrentMessage.MessageContent.Length == 1)
+                {
+                    ChatMessageScopes scope = ChatMessageScopes.Area;
+                    switch (obj.CurrentMessage.MessageType.Substring("chat_".Length))
+                    {
+                        default:
+                        case "area":
+                            break;
+                        case "party":
+                            scope = ChatMessageScopes.Party;
+                            break;
+                        case "dimension":
+                            scope = ChatMessageScopes.Dimension;
+                            break;
+                        case "global":
+                            scope = ChatMessageScopes.Global;
+                            break;
+                    }
 
-                    
+                    if(server.Dimensions.TryGetValue(DimensionId, out Dimension d) && d.Map.LoadedObjects.TryGetValue(FocusedObjectId.Value, out GameObject go))
+                    {
+                        server.MessageQueue.Enqueue(new ChatMessage()
+                        {
+                            Content = obj.CurrentMessage.MessageContent[0],
+                            Sender = Name,
+                            TimeSent = DateTime.Now,
+                            DimensionSent = DimensionId,
+                            PlaceSent = go.Coordinates,
+                            SenderObjectId = FocusedObjectId.Value,
+                            MessageType = ChatMessageTypes.Player,
+                            MessageScope = scope
+                        });
+                    }
+                }
             }
         }
 

@@ -41,13 +41,6 @@ namespace Playerdom.Shared
         {
             Chunk[,] chunks = new Chunk[2 * CHUNK_RANGE + 1, 2 * CHUNK_RANGE + 1];
 
-
-            //Because position can be negative, division will index negagtive positions improperly. This corrects it.
-
-
-            //if (xPos == 0.0) xSupplement = 1;
-            //if (yPos == 0.0) ySupplement = 1;
-
             (long, long) currentChunk = PositionToChunkIndex((xPos, yPos));
 
             lock(LoadedChunks)
@@ -63,18 +56,17 @@ namespace Playerdom.Shared
         }
 
 
-        public static Tile GetDefaultTile((double, double) coordinates, Random chunkRNG, CubicNoise noiseGenerator)
+        public static Tile GetDefaultTile((double, double) coordinates, Random chunkRNG, CubicNoise riverNoiseGenerator, CubicNoise lakeNoiseGenerator, CubicNoise pathNoiseGenerator)
         {
             coordinates = (Math.Round(coordinates.Item1, 0), Math.Round(coordinates.Item2, 0));
-            float f = noiseGenerator.Sample((coordinates.Item1) / Chunk.SIZE, (coordinates.Item2) / Chunk.SIZE);
+            float f1 = riverNoiseGenerator.Sample((coordinates.Item1) / Chunk.SIZE, (coordinates.Item2) / Chunk.SIZE);
+            float f2 = lakeNoiseGenerator.Sample((coordinates.Item1) / Chunk.SIZE, (coordinates.Item2) / Chunk.SIZE);
+            float f3 = pathNoiseGenerator.Sample((coordinates.Item1) / Chunk.SIZE, (coordinates.Item2) / Chunk.SIZE);
             Tile t = new Tile();
 
-            if (f > 0.5 - 0.0625 && f < 0.5 + 0.0625)
+            if ((f1 > 0.5 - 0.0625 && f1 < 0.5 + 0.0625) || f2 < 0.0625)
             {
-                double xVal = ((double)coordinates.Item1) % 47;
-                double yVal = ((double)coordinates.Item2) % 47;
-
-                if ((xVal > 0 && xVal < 4) || (yVal > 0 && yVal < 4))
+                if (f3 > 0.5 - 0.0625 && f3 < 0.5 + 0.0625 && f2 >= 0.0625)
                 {
                     t.TypeId = 4;
                     t.VarientId = 0;
@@ -84,6 +76,11 @@ namespace Playerdom.Shared
                     t.TypeId = 2;
                     t.VarientId = 0;
                 }
+            }
+            else if (f3 > 0.5 - 0.0625 && f3 < 0.5 + 0.0625)
+            {
+                t.TypeId = 6;
+                t.VarientId = 0;
             }
             else if ((ushort)chunkRNG.Next(0, 1024) == 0)
             {
@@ -147,7 +144,9 @@ namespace Playerdom.Shared
                         Tile[,] t = new Tile[Chunk.SIZE, Chunk.SIZE];
 
                         string fullRngString = xCoord + dimensionRngString + yCoord;
-                        CubicNoise noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        CubicNoise riverNoiseGenerator = new CubicNoise((dimensionRngString + "r").ToSeed(), 1);
+                        CubicNoise lakeNoiseGenerator = new CubicNoise((dimensionRngString + "o").ToSeed(), 1);
+                        CubicNoise pathNoiseGenerator = new CubicNoise((dimensionRngString + "p").ToSeed(), 1);
                         Random rng = new Random(fullRngString.ToSeed());
 
 
@@ -155,20 +154,21 @@ namespace Playerdom.Shared
                         {
                             for (byte x = 0; x < Chunk.SIZE; x++)
                             {
-                                t[x, y] = GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator);
+                                t[x, y] = GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, riverNoiseGenerator, lakeNoiseGenerator, pathNoiseGenerator);
                             }
                         }
 
 
                         dimensionRngString = defaultRngString + (dimensionId + 1);
-                        noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        riverNoiseGenerator = new CubicNoise((dimensionRngString + 1 + "r").ToSeed(), 1);
+                        pathNoiseGenerator = new CubicNoise((dimensionRngString + 1 + "p").ToSeed(), 1);
                         rng = new Random((xCoord + dimensionRngString + yCoord).ToSeed());
-                        Random r = new Random(dimensionId + 1);
+                        Random r = new Random(dimensionRngString.ToSeed());
                         for (byte y = 0; y < Chunk.SIZE; y++)
                         {
                             for (byte x = 0; x < Chunk.SIZE; x++)
                             {
-                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator).TypeId == 1)
+                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, riverNoiseGenerator, lakeNoiseGenerator, pathNoiseGenerator).TypeId == 1)
                                 {
                                     t[x, y].TypeId = 5;
                                     t[x, y].VarientId = 0;
@@ -177,14 +177,15 @@ namespace Playerdom.Shared
                         }
 
                         dimensionRngString = defaultRngString + dimensionId;
-                        noiseGenerator = new CubicNoise(dimensionRngString.ToSeed(), 1);
+                        riverNoiseGenerator = new CubicNoise((dimensionRngString + "r").ToSeed(), 1);
+                        pathNoiseGenerator = new CubicNoise((dimensionRngString + "p").ToSeed(), 1);
                         rng = new Random((xCoord + dimensionRngString + yCoord).ToSeed());
-                        r = new Random(dimensionId);
+                        r = new Random(dimensionRngString.ToSeed());
                         for (byte y = 0; y < Chunk.SIZE; y++)
                         {
                             for (byte x = 0; x < Chunk.SIZE; x++)
                             {
-                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, noiseGenerator).TypeId == 1)
+                                if ((ushort)r.Next(0, 2048) == 0 && GetDefaultTile(IndecesToPosition((xCoord, yCoord), (x, y)), rng, riverNoiseGenerator, lakeNoiseGenerator, pathNoiseGenerator).TypeId == 1)
                                 {
                                     t[x, y].TypeId = 5;
                                     t[x, y].VarientId = 0;

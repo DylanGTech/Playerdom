@@ -9,10 +9,10 @@ namespace Playerdom.Shared
     public struct ChatMessage
     {
         [Key(0)]
-        public string Content;
+        public string Content { get; set; }
 
         [Key(1)]
-        public string Sender;
+        public string Sender { get; set; }
 
         [Key(2)]
         public DateTime TimeSent { get; set; }
