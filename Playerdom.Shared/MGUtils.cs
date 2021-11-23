@@ -20,7 +20,6 @@ namespace Playerdom.Shared
 
             (float hue, float sat, float val) hsv = (max, max, max);
 
-
             float dif = max - min;
             hsv.sat = max == 0 ? 0 : dif / max;
             if (max == min)
@@ -31,15 +30,15 @@ namespace Playerdom.Shared
             {
                 if (max == r)
                 {
-                    hsv.hue = (g - b) / dif + (g < b ? 6 : 0);
+                    hsv.hue = ((g - b) / dif + 6f) % 6f;
                 }
                 else if (max == g)
                 {
-                    hsv.hue = (b - r) / dif + 2;
+                    hsv.hue = ((b - r) / dif + 2) % 6f;
                 }
                 else if(max == b)
                 {
-                    hsv.hue = (r - g) / dif + 4;
+                    hsv.hue = ((r - g) / dif + 4) % 6f;
                 }
 
                 hsv.hue /= 6;
@@ -51,16 +50,22 @@ namespace Playerdom.Shared
         public static (float hue, float sat, float val) OffsetHSV(this (float hue, float sat, float val) hsv, (float hue, float sat, float val) offset)
         {
             hsv.hue += offset.hue;
-            if (hsv.hue >= 1f) hsv.hue -= 1f;
-            else if (hsv.hue < 0f) hsv.hue += 1f;
+            while (hsv.hue > 1f)
+                hsv.hue -= 1f;
+            while (hsv.hue < 0f)
+                hsv.hue += 1f;
 
             hsv.sat += offset.sat;
-            if (hsv.sat >= 1f) hsv.sat -= 1f;
-            else if (hsv.sat < 0f) hsv.sat += 1f;
+            while (hsv.sat > 1f)
+                hsv.sat -= 1f;
+            while (hsv.sat < 0f)
+                hsv.sat += 1f;
 
             hsv.val += offset.val;
-            if (hsv.val >= 1f) hsv.val -= 1f;
-            else if (hsv.val < 0f) hsv.val += 1f;
+            while (hsv.val > 1f)
+                hsv.val -= 1f;
+            while (hsv.val < 0f)
+                hsv.val += 1f;
 
             return hsv;
         }
@@ -73,11 +78,11 @@ namespace Playerdom.Shared
             byte g = 0;
             byte b = 0;
 
-            byte i = (byte)Math.Floor(hsv.hue * 6);
-            float f = (byte)(hsv.hue * 6 - i);
-            float p = (byte)(hsv.val * (1 - hsv.sat));
-            float q = (byte)(hsv.val * (1 - f * hsv.sat));
-            float t = (byte)(hsv.val * (1 - (1 - f) * hsv.sat));
+            byte i = (byte)Math.Floor(hsv.hue * 6f);
+            float f = (float)(hsv.hue * 6 - i);
+            float p = (float)(hsv.val * (1 - hsv.sat));
+            float q = (float)(hsv.val * (1 - f * hsv.sat));
+            float t = (float)(hsv.val * (1 - (1 - f) * hsv.sat));
 
             switch (i % 6)
             {
@@ -112,7 +117,6 @@ namespace Playerdom.Shared
                     b = (byte)(q * 255);
                     break;
             }
-
             return new Color(r, g, b);
         }
 

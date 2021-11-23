@@ -99,20 +99,15 @@ namespace Playerdom.Server.ViewModels
                         while (IsRunning) //Poll stats
                         {
                             NumPlayers = (uint)Server.Clients.Count;
-
-                            if (Dimensions != null && Dimensions.Count == 0 && Server.Dimensions.Count > 0)
-                            {
-                                Dimensions = Server.Dimensions.Keys.ToList();
-
-                                if(!Server.Dimensions.Keys.Contains(SelectedDimension))
-                                    SelectedDimension = Server.Dimensions.Keys.First();
-                            }
                             Dimensions = Server.Dimensions.Keys.ToList();
+                            if (!Server.Dimensions.Keys.Contains(SelectedDimension))
+                                SelectedDimension = Server.Dimensions.Keys.First();
+                            else this.RaisePropertyChanged(nameof(SelectedDimension));
 
                             NumLoadedChunks = (uint)Server.Dimensions[SelectedDimension].Map.LoadedChunks.Count;
                             NumLoadedObjects = (uint)Server.Dimensions[SelectedDimension].Map.LoadedObjects.Count;
 
-                            this.RaisePropertyChanged("IsRunning");
+                            this.RaisePropertyChanged(nameof(IsRunning));
                             Thread.Sleep(1000);
                         }
                     }).Start();

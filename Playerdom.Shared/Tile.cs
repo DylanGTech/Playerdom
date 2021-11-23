@@ -62,7 +62,6 @@ namespace Playerdom.Shared
 
         public static void ChangeTextureHSV((float hue, float sat, float val) hsv)
         {
-            if (currentHsv.Equals(hsv)) return;
             currentHsv = hsv;
                 lock (textures)
                 {
@@ -105,6 +104,7 @@ namespace Playerdom.Shared
             textures.Add(5, new Texture2D[] { new Texture2D(device, defaultTextures[5][0].Width, defaultTextures[5][0].Height) });
             textures.Add(6, new Texture2D[] { new Texture2D(device, defaultTextures[6][0].Width, defaultTextures[6][0].Height) });
 
+            Tile.ChangeTextureHSV(currentHsv);
         }
 
         /*
