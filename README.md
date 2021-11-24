@@ -7,13 +7,6 @@ Playerdom is an open-world infinite procedurally-generating multidimensional env
 ![Game Preview](https://i.imgur.com/w9Hbmmy.png)
 
 ---
-## Buy me a coffee
-
-If you like this project, want to support creators, or just enjoy helping a fella out, feel free to buy me a pizza! This will free up more of my time to work on open-source projects such as this :)
-
-<a href="https://www.buymeacoffee.com/dylangtech" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
-
----
 
 ## Features
 - Multiplayer support
