@@ -21,6 +21,9 @@ namespace Playerdom.Models
 {
     public class GameServer : IDisposable
     {
+	public const string DIMENSIONS_FOLDER_NAME = "Dimensions";
+	public const string DATABASE_FILE_NAME = "data.db";
+
         public ConcurrentDictionary<ushort, Dimension> Dimensions { get; init; } = new ConcurrentDictionary<ushort, Dimension>();
         public List<GameServerClient> Clients { get; init; } = new List<GameServerClient>();
         public ConcurrentQueue<ChatMessage> MessageQueue { get; init; } = new ConcurrentQueue<ChatMessage>();
@@ -61,7 +64,7 @@ namespace Playerdom.Models
         {
             if (!Directory.Exists(this.saveDirectoryPath)) Directory.CreateDirectory(this.saveDirectoryPath);
 
-            string dbFilePath = Path.Combine(saveDirectoryPath, "data.db");
+            string dbFilePath = Path.Combine(saveDirectoryPath, DATABASE_FILE_NAME);
 
             SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder()
             {
@@ -306,7 +309,7 @@ namespace Playerdom.Models
 
                         foreach((long, long) coords in chunksToBeUnloaded)
                         {
-                            d.Map.UnloadChunk(coords.Item1, coords.Item2, Path.Combine(this.saveDirectoryPath, "dimensions", id.ToString()));
+                            d.Map.UnloadChunk(coords.Item1, coords.Item2, Path.Combine(this.saveDirectoryPath, DIMENSIONS_FOLDER_NAME, id.ToString()));
                         }
                     }
                 }
@@ -340,7 +343,7 @@ namespace Playerdom.Models
 
         public void LoadDimension(ushort id)
         {
-            string dimensionsPath = Path.Combine(this.saveDirectoryPath, "Dimensions");
+            string dimensionsPath = Path.Combine(this.saveDirectoryPath, DIMENSIONS_FOLDER_NAME);
             if (!Directory.Exists(dimensionsPath)) Directory.CreateDirectory(dimensionsPath);
 
             Dimensions.TryAdd(id, new Dimension("Hello", id));

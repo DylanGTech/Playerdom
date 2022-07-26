@@ -158,7 +158,7 @@ namespace Playerdom.Server.Models
                                     }
 
 
-                                    ClientPack pack = new ClientPack() { Chunks = server.Dimensions[DimensionId].Map.GetLocalChunks(objCloneToSend[FocusedObjectId.Value].Coordinates.Item1, objCloneToSend[FocusedObjectId.Value].Coordinates.Item2, DimensionId, Path.Combine(server.saveDirectoryPath, "Dimensions", DimensionId.ToString()), server.Dimensions[DimensionId].DefaultSeedString), GameObjects = objCloneToSend, GameEntities = entCloneToSend, NewChats = messages };
+                                    ClientPack pack = new ClientPack() { Chunks = server.Dimensions[DimensionId].Map.GetLocalChunks(objCloneToSend[FocusedObjectId.Value].Coordinates.Item1, objCloneToSend[FocusedObjectId.Value].Coordinates.Item2, DimensionId, Path.Combine(server.saveDirectoryPath, GameServer.DIMENSIONS_FOLDER_NAME, DimensionId.ToString()), server.Dimensions[DimensionId].DefaultSeedString), GameObjects = objCloneToSend, GameEntities = entCloneToSend, NewChats = messages };
                                     Send(pack);
                                 }
                                 else
