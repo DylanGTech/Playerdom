@@ -1,19 +1,15 @@
 ﻿using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Playerdom.Shared
+namespace Playerdom.Shared;
+
+[MessagePackObject]
+public struct Chunk
 {
-    [MessagePackObject]
-    public struct Chunk
-    {
-        public const byte SIZE = 32;
+    public const byte SIZE = 32;
 
-        [Key(0)]
-        public Tile[,] Tiles
-        {
-            get; set;
-        }
+    [Key(0)]
+    public Tile[,] Tiles
+    {
+        get; set;
     }
 }

@@ -1,8 +1,4 @@
 ﻿using Playerdom.Shared;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -14,19 +10,18 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-namespace Playerdom.UWP
+namespace Playerdom.UWP;
+
+public sealed partial class GamePage : Page
 {
-    public sealed partial class GamePage : Page
+    readonly PlayerdomGame _game;
+
+    public GamePage()
     {
-        readonly PlayerdomGame _game;
+        this.InitializeComponent();
 
-        public GamePage()
-        {
-            this.InitializeComponent();
-
-            // Create the game.
-            var launchArguments = string.Empty;
-            _game = MonoGame.Framework.XamlGame<PlayerdomGame>.Create(launchArguments, Window.Current.CoreWindow, swapChainPanel);
-        }
+        // Create the game.
+        var launchArguments = string.Empty;
+        _game = MonoGame.Framework.XamlGame<PlayerdomGame>.Create(launchArguments, Window.Current.CoreWindow, swapChainPanel);
     }
 }

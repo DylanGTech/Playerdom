@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Playerdom.Shared;
 
-namespace Playerdom.Shared
+public enum BasicDirections
 {
-    public enum BasicDirections
-    {
-        North,
-        South,
-        West,
-        East,
-        NorthWest,
-        NorthEast,
-        SouthWest,
-        SouthEast
-    }
+    North,
+    South,
+    West,
+    East,
+    NorthWest,
+    NorthEast,
+    SouthWest,
+    SouthEast
 }

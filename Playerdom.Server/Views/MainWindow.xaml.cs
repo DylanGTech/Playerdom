@@ -2,21 +2,20 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace Playerdom.Server.Views
-{
-    public class MainWindow : Window
-    {
-        public MainWindow()
-        {
-            InitializeComponent();
-#if DEBUG
-            //this.AttachDevTools();
-#endif
-        }
+namespace Playerdom.Server.Views;
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+public class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+#if DEBUG
+        //this.AttachDevTools();
+#endif
+    }
+
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 }
