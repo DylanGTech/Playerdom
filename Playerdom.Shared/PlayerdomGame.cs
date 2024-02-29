@@ -77,25 +77,21 @@ namespace Playerdom.Shared
 
             public ITexture2DManager TextureManager => _textures;
 
-            public void Draw(object texture, System.Numerics.Vector2 position, System.Drawing.Rectangle? sourceRectangle, System.Drawing.Color color, float rotation, System.Numerics.Vector2 origin, System.Numerics.Vector2 scale, float depth)
+            public void Draw(object texture, System.Numerics.Vector2 position, System.Drawing.Rectangle? source, FSColor color, float rotation, System.Numerics.Vector2 scale, float depth)
             {
                 var textureWrapper = (Texture2D)texture;
 
                 _batch.Draw(textureWrapper,
                     position.ToXNA(),
-                    sourceRectangle == null ? default(Microsoft.Xna.Framework.Rectangle?) : sourceRectangle.Value.ToXNA(),
+                    source == null ? default(Microsoft.Xna.Framework.Rectangle?) : source.Value.ToXNA(),
                     color.ToXNA(),
                     rotation,
-                    origin.ToXNA(),
+                    new Vector2(),
                     scale.ToXNA(),
                     SpriteEffects.None,
                     depth);
             }
         }
-
-
-
-
 
 
         CurrentClientState currentState = new CurrentClientState(null, new ConcurrentDictionary<Guid, GameObject>(), new ConcurrentDictionary<Guid, GameEntities.GameEntity>());
@@ -500,8 +496,8 @@ namespace Playerdom.Shared
 
                 //spriteBatch.DrawString(debugFont, usernameString, usernameLocation, Color.White);
                 //spriteBatch.DrawString(debugFont, passwordString, passwordLocation, Color.White);
-                debugFont.DrawText(new Renderer(spriteBatch, textures), usernameString, usernameLocation.ToGeneric(), Color.White.ToGeneric());
-                debugFont.DrawText(new Renderer(spriteBatch, textures), passwordString, passwordLocation.ToGeneric(), Color.White.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch, textures), usernameString, usernameLocation.ToGeneric(), FSColor.White);
+                debugFont.DrawText(new Renderer(spriteBatch, textures), passwordString, passwordLocation.ToGeneric(), FSColor.White);
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);
@@ -612,7 +608,7 @@ namespace Playerdom.Shared
                                         Rectangle r1 = new Rectangle(new Point((int)((obj.Coordinates.Item1 - focusedObjectCoordinates.Item1) * (double)Tile.SIZE) + scene.Width / 2 - (int)(size.X / 2), (int)((obj.Coordinates.Item2 - focusedObjectCoordinates.Item2) * (double)Tile.SIZE - (double)(obj.Size.Item2 * Tile.SIZE / 2)) + scene.Height / 2 - (int)(size.Y / 2) - (int)(Tile.SIZE / 4)), new Point((int)size.X, (int)size.Y));
 
                                         //spriteBatch.DrawString(debugFont, label, new Vector2(r1.X, r1.Y - 12), Color.White);
-                                        debugFont.DrawText(new Renderer(spriteBatch, textures), label, new Vector2(r1.X, r1.Y - 12).ToGeneric(), Color.White.ToGeneric());
+                                        debugFont.DrawText(new Renderer(spriteBatch, textures), label, new Vector2(r1.X, r1.Y - 12).ToGeneric(), FSColor.White);
 
                                     }
 
@@ -620,7 +616,7 @@ namespace Playerdom.Shared
                                     Vector2 watermarkSize = debugFont.MeasureString(watermark).ToXNA();
 
                                     //spriteBatch.DrawString(debugFont, watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y), Color.White);
-                                    debugFont.DrawText(new Renderer(spriteBatch, textures), watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y).ToGeneric(), Color.White.ToGeneric());
+                                    debugFont.DrawText(new Renderer(spriteBatch, textures), watermark, new Vector2(scene.Width - watermarkSize.X, scene.Height - watermarkSize.Y).ToGeneric(), FSColor.White);
 
 
                                 }
@@ -630,39 +626,39 @@ namespace Playerdom.Shared
                 string posString = $"Dimension: {dimensionId}, X: {copyP.Item1:0.000000}, Y: {copyP.Item2:0.000000}";
 
                 //spriteBatch.DrawString(debugFont, posString, new Vector2(0.0f, 0.0f), Color.DarkRed);
-                debugFont.DrawText(new Renderer(spriteBatch, textures), posString, new Vector2(0.0f, 0.0f).ToGeneric(), Color.DarkRed.ToGeneric());
+                debugFont.DrawText(new Renderer(spriteBatch, textures), posString, new Vector2(0.0f, 0.0f).ToGeneric(), FSColor.DarkRed);
 
 
                 Vector2 position = new Vector2(16, 48);
                 foreach (ChatMessage message in messages.ToArray())
                 {
-                    Color color;
+                    FSColor color;
                     string content = $"{message.TimeSent.ToLocalTime().ToShortTimeString()} - {message.Sender}: {message.Content}";
                     Vector2 size = debugFont.MeasureString(content).ToXNA();
 
                     switch (message.MessageType)
                     {
                         default:
-                            color = Color.LightGray;
+                            color = FSColor.LightGray;
                             break;
                         case ChatMessageTypes.Server:
-                            color = Color.Purple;
+                            color = FSColor.Purple;
                             break;
                         case ChatMessageTypes.Owner:
-                            color = Color.Gold;
+                            color = FSColor.Gold;
                             break;
                         case ChatMessageTypes.Admin:
-                            color = Color.Red;
+                            color = FSColor.Red;
                             break;
                         case ChatMessageTypes.Mod:
-                            color = Color.Blue;
+                            color = FSColor.Blue;
                             break;
                     }
 
                     Rectangle location = new Rectangle(position.ToPoint(), size.ToPoint());
                     spriteBatch.Draw(defaultRectangle, location, Color.Black);
                     //spriteBatch.DrawString(debugFont, content, position, color);
-                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), color.ToGeneric());
+                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), color);
                     position.Y += location.Height;
                 }
 
@@ -673,7 +669,7 @@ namespace Playerdom.Shared
 
                     spriteBatch.Draw(defaultRectangle, new Rectangle(position.ToPoint(), size.ToPoint()), Color.Black);
                     //spriteBatch.DrawString(debugFont, content, position, Color.White);
-                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), Color.White.ToGeneric());
+                    debugFont.DrawText(new Renderer(spriteBatch, textures), content, position.ToGeneric(), FSColor.White);
                 }
 
 

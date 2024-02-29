@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -152,11 +153,15 @@ namespace Playerdom.Shared
             return new Rectangle(rec.X, rec.Y, rec.Width, rec.Height);
         }
 
-        public static Color ToXNA(this System.Drawing.Color col)
+        public static Color ToXNA(this Color col)
         {
             return new Color(col.R, col.G, col.B, col.A);
         }
 
+        public static Color ToXNA(this FSColor col)
+        {
+            return new Color(col.R, col.G, col.B, col.A);
+        }
 
         public static System.Numerics.Vector2 ToGeneric(this Vector2 vec)
         {

@@ -13,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Playerdom.Shared;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 
 namespace Playerdom.Server.ViewModels
 {
@@ -20,61 +21,61 @@ namespace Playerdom.Server.ViewModels
     {
         public string Greeting => "Welcome to the Playerdom Server!";
 
-        private GameServer server;
+        private GameServer _server;
         public GameServer Server
         {
-            get => server;
-            set => this.RaiseAndSetIfChanged(ref server, value);
+            get => _server;
+            set => this.RaiseAndSetIfChanged(ref _server, value);
         }
 
-        private string serverCommand;
+        private string _serverCommand;
         public string ServerCommand
         {
-            get => serverCommand;
-            set => this.RaiseAndSetIfChanged(ref serverCommand, value);
+            get => _serverCommand;
+            set => this.RaiseAndSetIfChanged(ref _serverCommand, value);
         }
 
 
-        private List<ushort> dimensions;
+        private List<ushort> _dimensions;
         public List<ushort> Dimensions
         {
-            get => dimensions;
-            set => this.RaiseAndSetIfChanged(ref dimensions, value);
+            get => _dimensions;
+            set => this.RaiseAndSetIfChanged(ref _dimensions, value);
         }
 
-        private ushort selectedDimension = 0;
+        private ushort _selectedDimension;
         public ushort SelectedDimension
         {
-            get => selectedDimension;
-            set => this.RaiseAndSetIfChanged(ref selectedDimension, value);
+            get => _selectedDimension;
+            set => this.RaiseAndSetIfChanged(ref _selectedDimension, value);
         }
 
-        private uint numPlayers = 0;
+        private uint _numPlayers = 0;
         public uint NumPlayers
         {
-            get => numPlayers;
-            set => this.RaiseAndSetIfChanged(ref numPlayers, value);
+            get => _numPlayers;
+            set => this.RaiseAndSetIfChanged(ref _numPlayers, value);
         }
 
-        private uint numLoadedChunks = 0;
+        private uint _numLoadedChunks = 0;
         public uint NumLoadedChunks
         {
-            get => numLoadedChunks;
-            set => this.RaiseAndSetIfChanged(ref numLoadedChunks, value);
+            get => _numLoadedChunks;
+            set => this.RaiseAndSetIfChanged(ref _numLoadedChunks, value);
         }
 
-        private uint numLoadedObjects = 0;
+        private uint _numLoadedObjects = 0;
         public uint NumLoadedObjects
         {
-            get => numLoadedObjects;
-            set => this.RaiseAndSetIfChanged(ref numLoadedObjects, value);
+            get => _numLoadedObjects;
+            set => this.RaiseAndSetIfChanged(ref _numLoadedObjects, value);
         }
 
-        private ObservableCollection<string> logs = new ObservableCollection<string>();
+        private ObservableCollection<string> _logs = new ObservableCollection<string>();
         public ObservableCollection<string> Logs
         {
-            get => logs;
-            set => this.RaiseAndSetIfChanged(ref logs, value);
+            get => _logs;
+            set => this.RaiseAndSetIfChanged(ref _logs, value);
         }
 
 
@@ -87,7 +88,7 @@ namespace Playerdom.Server.ViewModels
             string savePath = Path.GetFullPath(Path.Combine("..", "Save", "Test"));
             if(!Directory.Exists(savePath)) Directory.CreateDirectory(savePath);
 
-            server = new GameServer(PrintLog, savePath);
+            Server = new GameServer(PrintLog, savePath);
 
             StartServerCommand = ReactiveCommand.Create(() =>
             {
@@ -116,7 +117,7 @@ namespace Playerdom.Server.ViewModels
 
             ExecuteCommand = ReactiveCommand.Create(() =>
             {
-                server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = SelectedDimension, TimeSent = DateTime.Now, MessageScope = ChatMessageScopes.Global, MessageType = ChatMessageTypes.Server, PlaceSent = (0, 0), Content = ServerCommand, Sender = "Server", SenderObjectId = Guid.Empty });
+                Server.MessageQueue.Enqueue(new ChatMessage() { DimensionSent = SelectedDimension, TimeSent = DateTime.Now, MessageScope = ChatMessageScopes.Global, MessageType = ChatMessageTypes.Server, PlaceSent = (0, 0), Content = ServerCommand, Sender = "Server", SenderObjectId = Guid.Empty });
             });
             
             
@@ -126,7 +127,7 @@ namespace Playerdom.Server.ViewModels
 
         }
 
-        public bool IsRunning => server.IsRunning;
+        public bool IsRunning => _server.IsRunning;
 
         private readonly ObservableAsPropertyHelper<string> _numPlayersString;
         public string NumPlayersString => _numPlayersString.Value;
@@ -144,7 +145,7 @@ namespace Playerdom.Server.ViewModels
                     Logs.RemoveAt(0);
                 }
                 Logs.Add(s);
-                this.RaisePropertyChanged("Logs");
+                this.RaisePropertyChanged(nameof(Logs));
             }));
         }
     }

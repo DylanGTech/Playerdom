@@ -28,7 +28,7 @@
 
 			<StackPanel Grid.Column="0" IsVisible="{Binding IsRunning, Mode=OneWay}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 				<TextBlock Text="{Binding NumPlayersString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				<ListBox Items="{Binding Logs, Mode=OneWay}" Height="300">
+				<ListBox ItemsSource="{Binding Logs, Mode=OneWay}" Height="300">
 					<ListBox.ItemTemplate>
 						<DataTemplate>
 							<TextBlock Text="{Binding}" VerticalAlignment="Stretch"/>
@@ -47,7 +47,7 @@
 
 			<StackPanel Grid.Column="1" IsVisible="{Binding IsRunning, Mode=OneWay}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 				<TextBlock Text="Dimension:" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				<ComboBox Items="{Binding Dimensions}" SelectedIndex="{Binding SelectedDimension, Mode=TwoWay}"/>
+				<ComboBox ItemsSource="{Binding Dimensions}" SelectedIndex="{Binding SelectedDimension, Mode=TwoWay}"/>
 				<TextBlock Text="{Binding NumLoadedChunksString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 				<TextBlock Text="{Binding NumLoadedObjectsString, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 			</StackPanel>
